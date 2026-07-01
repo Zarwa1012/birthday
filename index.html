@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>Happy Birthday 🎂</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ============================================= -->
+  <!-- PREMIUM LOADING SCREEN                         -->
+  <!-- ============================================= -->
+  <div id="loader">
+    <div class="loader-heart">💗</div>
+    <p>Wrapping your surprise...</p>
+  </div>
+
+  <!-- ============================================= -->
+  <!-- CURSOR GLOW (desktop only, follows mouse)      -->
+  <!-- ============================================= -->
+  <div id="cursorGlow"></div>
+
+  <!-- ============================================= -->
+  <!-- CONFETTI CANVAS (fires once page loads)        -->
+  <!-- ============================================= -->
+  <canvas id="confettiCanvas"></canvas>
+
+  <!-- ============================================= -->
+  <!-- BACKGROUND LAYERS (populated dynamically by JS) -->
+  <!-- Layer 1: hearts, stars, sparkles, fireflies     -->
+  <!-- Layer 2: bubbles, blobs, clouds                 -->
+  <!-- Layer 3: aurora glow circles + light particles  -->
+  <!-- ============================================= -->
+  <div class="bg-layer" id="layer1"></div>
+  <div class="bg-layer" id="layer2"></div>
+  <div class="bg-layer" id="layer3">
+    <div class="aurora aurora-a"></div>
+    <div class="aurora aurora-b"></div>
+    <div class="aurora aurora-c"></div>
+  </div>
+  <div class="light-rays"></div>
+
+  <!-- Floating butterflies -->
+  <div class="butterflies" id="butterflies"></div>
+
+  <!-- ============================================= -->
+  <!-- MUSIC CONTROL                                  -->
+  <!-- ============================================= -->
+  <audio id="bgMusic" loop>
+    <source src="music.mp3" type="audio/mp3">
+  </audio>
+  <button id="musicBtn" class="music-btn">
+    <span id="musicIcon">🎵</span>
+    <span id="musicLabel">Play Music</span>
+  </button>
+
+  <!-- ============================================= -->
+  <!-- SWIPEABLE PAGES                                -->
+  <!-- ============================================= -->
+  <main class="pages" id="pages">
+
+    <!-- ===================== PAGE 1 : HERO ===================== -->
+    <section class="page page-hero">
+      <div class="cake-wrap">
+        <div class="cake">🎂</div>
+        <div class="gift gift-left">🎁</div>
+        <div class="gift gift-right">🎁</div>
+      </div>
+
+      <h1 class="hero-title">Happy Birthday</h1>
+
+      <p class="hero-wish">
+        Today the whole world should pause and celebrate <br>
+        because someone as wonderful as you was born. <br>
+        You bring warmth to every room you enter <br>
+        and comfort to every heart you touch. <br>
+        May this year hand you more laughter than you can hold, <br>
+        more little joys than you can count, <br>
+        and more beautiful memories than any page can keep. <br>
+        Here's to you, today and always. <br>
+        Happy Birthday, my dearest friend. 🎈
+      </p>
+
+      <div class="swipe-hint">
+        <span>Swipe to open your surprise</span>
+        <div class="arrow">→</div>
+      </div>
+    </section>
+
+    <!-- ===================== PAGE 2 : GALLERY ===================== -->
+    <!-- 👉 Replace pic1.jpg ... pic6.jpg with your real photo URLs -->
+    <section class="page page-gallery">
+      <h2 class="section-title">Beautiful Memories ❤️</h2>
+
+      <div class="gallery" id="gallery">
+        <figure class="frame" data-anim="fadeIn">
+          <img src="pic1.jpg" alt="Memory 1">
+          <figcaption>that one sunny day ☀️</figcaption>
+        </figure>
+        <figure class="frame" data-anim="zoomIn">
+          <img src="pic2.jpg" alt="Memory 2">
+          <figcaption>us being silly 😄</figcaption>
+        </figure>
+        <figure class="frame" data-anim="slideUp">
+          <img src="pic3.jpg" alt="Memory 3">
+          <figcaption>my favorite laugh 🤍</figcaption>
+        </figure>
+        <figure class="frame" data-anim="rotateIn">
+          <img src="pic4.jpg" alt="Memory 4">
+          <figcaption>unforgettable night ✨</figcaption>
+        </figure>
+        <figure class="frame" data-anim="bounceIn">
+          <img src="pic5.jpg" alt="Memory 5">
+          <figcaption>always together 💞</figcaption>
+        </figure>
+        <figure class="frame" data-anim="fadeIn">
+          <img src="pic6.jpg" alt="Memory 6">
+          <figcaption>this exact smile 🥰</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- ===================== PAGE 3 : FINAL MESSAGE ===================== -->
+    <section class="page page-message">
+      <h2 class="section-title">A Special Message For You ❤️</h2>
+
+      <div class="letter">
+        <p>
+          I don't think you fully know how much you mean to the people around you,
+          so let me remind you today. You are the friend who shows up without being asked,
+          who listens without judging, and who somehow makes hard days feel lighter
+          just by being there. You celebrate other people's wins like they're your own,
+          and you carry other people's worries like they're your own too — and honestly,
+          it's time someone looked after your heart the way you look after everyone else's.
+          <br><br>
+          So today, I hope you slow down and actually feel how loved you are.
+          I hope you laugh until your cheeks hurt, eat something ridiculously sweet,
+          and end the day knowing that this next year of your life is going to be
+          softer, brighter, and kinder to you than the last.
+          <br><br>
+          Thank you for being exactly who you are. Never change that.
+          Happy Birthday — I love you more than words on a screen can really show. 💗
+        </p>
+      </div>
+
+      <div class="made-with-love">❤️ Made with Love ❤️</div>
+    </section>
+
+  </main>
+
+  <!-- Navigation dots -->
+  <div class="dots" id="dots"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -227,12 +227,24 @@ function animateConfetti(){
 }
 
 /* ---------------------------------------------------------------
-   5. PAGE SWIPE ENGINE (touch / mouse drag / keyboard / dots)
+   5. PAGE NAVIGATION ENGINE — VERTICAL
+   CHANGED: entire section rewritten from horizontal swipe
+   (translateX / left-right) to vertical navigation (translateY /
+   up-down), driven by:
+     - mouse wheel / trackpad  (desktop)
+     - touch swipe up/down     (mobile)
+     - ArrowDown / ArrowUp keys
+     - nav dots (unchanged, still clickable)
+   A transition lock (isAnimating) stops multiple triggers from
+   firing mid-animation, matching the 800ms CSS transition.
 --------------------------------------------------------------- */
 const pagesEl = document.getElementById('pages');
 const totalPages = pagesEl.children.length;
 const dotsEl = document.getElementById('dots');
+const parallaxTargets = document.querySelectorAll('.bg-layer, .light-rays, .butterflies');
 let current = 0;
+let isAnimating = false;                 // NEW: transition lock
+const TRANSITION_MS = 800;               // matches --transition-page in CSS
 
 for(let i = 0; i < totalPages; i++){
   const d = document.createElement('div');
@@ -245,55 +257,56 @@ const dotEls = document.querySelectorAll('.dot');
 
 function goTo(index){
   const newIndex = Math.max(0, Math.min(totalPages - 1, index));
-  if(newIndex === current && pagesEl.style.transform) {
-    current = newIndex; // still allow re-render on first call
-  }
+  if(newIndex === current || isAnimating) return;  // NEW: ignore no-op / mid-animation calls
+
+  isAnimating = true;
   current = newIndex;
-  pagesEl.style.transform = `translateX(-${current * 100}vw)`;
+
+  // CHANGED: translateY instead of translateX — moves pages up/down
+  pagesEl.style.transform = `translateY(-${current * 100}vh)`;
   dotEls.forEach((d, i) => d.classList.toggle('active', i === current));
+
+  // NEW: slight parallax — background layers move at a fraction of the
+  // page's distance, so they appear to glide slower than the foreground
+  parallaxTargets.forEach(layer => {
+    layer.style.transform = `translateY(-${current * 12}px)`;
+  });
 
   // trigger gallery sequential reveal the first time page 2 is opened
   if(current === 1) revealGallery();
+
+  // release the lock once the CSS transition finishes
+  setTimeout(() => { isAnimating = false; }, TRANSITION_MS);
 }
 
-// Touch swipe
-let touchStartX = 0;
+/* --- Mouse wheel / trackpad (desktop) --- */
+window.addEventListener('wheel', (e) => {
+  if(isAnimating) return;                 // NEW: swallow extra wheel events mid-transition
+  if(e.deltaY > 20) goTo(current + 1);     // scroll down -> next page
+  else if(e.deltaY < -20) goTo(current - 1); // scroll up -> previous page
+}, { passive: true });
+
+/* --- Touch swipe up/down (mobile) --- */
+let touchStartY = 0;
 let touchDragging = false;
 
 pagesEl.addEventListener('touchstart', (e) => {
-  touchStartX = e.touches[0].clientX;
+  touchStartY = e.touches[0].clientY;
   touchDragging = true;
 });
 pagesEl.addEventListener('touchend', (e) => {
-  if(!touchDragging) return;
+  if(!touchDragging || isAnimating) return;
   touchDragging = false;
-  const diff = touchStartX - e.changedTouches[0].clientX;
+  const diff = touchStartY - e.changedTouches[0].clientY;
   const threshold = 50;
-  if(diff > threshold) goTo(current + 1);
-  else if(diff < -threshold) goTo(current - 1);
+  if(diff > threshold) goTo(current + 1);        // swiped up -> next page
+  else if(diff < -threshold) goTo(current - 1);  // swiped down -> previous page
 });
 
-// Mouse drag
-let mouseStartX = 0;
-let mouseDragging = false;
-
-pagesEl.addEventListener('mousedown', (e) => {
-  mouseStartX = e.clientX;
-  mouseDragging = true;
-});
-window.addEventListener('mouseup', (e) => {
-  if(!mouseDragging) return;
-  mouseDragging = false;
-  const diff = mouseStartX - e.clientX;
-  const threshold = 60;
-  if(diff > threshold) goTo(current + 1);
-  else if(diff < -threshold) goTo(current - 1);
-});
-
-// Keyboard arrows
+/* --- Keyboard arrows --- */
 window.addEventListener('keydown', (e) => {
-  if(e.key === 'ArrowRight') goTo(current + 1);
-  if(e.key === 'ArrowLeft') goTo(current - 1);
+  if(e.key === 'ArrowDown') goTo(current + 1);
+  if(e.key === 'ArrowUp') goTo(current - 1);
 });
 
 /* ---------------------------------------------------------------
@@ -308,35 +321,75 @@ function revealGallery(){
   const frames = document.querySelectorAll('.frame');
   frames.forEach((frame, i) => {
     setTimeout(() => {
-      const animName = frame.dataset.anim || 'fadeIn';
-      frame.style.animationName = animName;
+      // CHANGED: every frame now uses the same unified animation
+      // (fade in + scale up + soft glow) instead of a different
+      // animation per card, per the updated requirements.
+      frame.style.animationName = 'revealFrame';
       frame.classList.add('visible');
       frame.style.opacity = '1';
-      frame.style.transform = 'translateY(0)';
-    }, i * 500);
+      frame.style.transform = 'translateY(0) scale(1)';
+    }, i * 500); // still 500ms apart, one by one
   });
 }
 
 /* ---------------------------------------------------------------
-   7. MUSIC CONTROL (no autoplay — user must click)
+   7. MUSIC CONTROL
+   CHANGED: music now tries to autoplay as soon as the site opens.
+   If the browser's autoplay policy blocks that (very common), a
+   floating "Tap to Start Music" button appears automatically; the
+   very next click/tap anywhere on the page starts the music and
+   hides the button. The existing Play/Pause button keeps working
+   as a manual toggle either way. Music loops continuously.
 --------------------------------------------------------------- */
 const music = document.getElementById('bgMusic');
 const musicBtn = document.getElementById('musicBtn');
 const musicIcon = document.getElementById('musicIcon');
 const musicLabel = document.getElementById('musicLabel');
+const tapMusicBtn = document.getElementById('tapMusicBtn');
 let isPlaying = false;
 
+function setPlayingUI(playing){
+  isPlaying = playing;
+  musicIcon.textContent = playing ? '⏸' : '🎵';
+  musicLabel.textContent = playing ? 'Pause Music' : 'Play Music';
+  tapMusicBtn.classList.add('hidden');
+}
+
+function tryAutoplay(){
+  const playPromise = music.play();
+  if(playPromise !== undefined){
+    playPromise
+      .then(() => setPlayingUI(true))       // autoplay succeeded
+      .catch(() => {                        // NEW: autoplay blocked by browser
+        tapMusicBtn.classList.remove('hidden');
+
+        // start music on the very next click/tap anywhere on the page
+        const startOnFirstInteraction = () => {
+          music.play().then(() => setPlayingUI(true)).catch(() => {});
+          document.removeEventListener('click', startOnFirstInteraction);
+          document.removeEventListener('touchstart', startOnFirstInteraction);
+        };
+        document.addEventListener('click', startOnFirstInteraction);
+        document.addEventListener('touchstart', startOnFirstInteraction);
+      });
+  }
+}
+
+// attempt autoplay as soon as the page has loaded
+window.addEventListener('load', tryAutoplay);
+
+// manual toggle button still works as before
 musicBtn.addEventListener('click', () => {
   if(!isPlaying){
-    music.play().catch(() => {
-      // file may not exist yet (music.mp3 placeholder) — fail silently
-    });
-    musicIcon.textContent = '⏸';
-    musicLabel.textContent = 'Pause Music';
+    music.play().catch(() => {});
+    setPlayingUI(true);
   } else {
     music.pause();
-    musicIcon.textContent = '🎵';
-    musicLabel.textContent = 'Play Music';
+    setPlayingUI(false);
   }
-  isPlaying = !isPlaying;
+});
+
+// clicking the floating "Tap to Start Music" button also starts it directly
+tapMusicBtn.addEventListener('click', () => {
+  music.play().then(() => setPlayingUI(true)).catch(() => {});
 });
